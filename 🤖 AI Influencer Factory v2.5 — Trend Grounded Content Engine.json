@@ -1,0 +1,553 @@
+{
+  "name": "🤖 AI Influencer Factory v2.5 — Trend-Grounded Content Engine",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "🤖 AI Influencer Factory",
+        "formDescription": "Enter your virtual influencer's details. AI will generate the complete identity, 30-day content calendar with Ideogram prompts, carousel scripts, and brand pitch emails.",
+        "formFields": {
+          "values": [
+            { "fieldLabel": "Influencer Name", "placeholder": "e.g. Ananya Sharma", "requiredField": true },
+            { "fieldLabel": "Instagram Handle", "placeholder": "e.g. @anaya.fitlife", "requiredField": true },
+            {
+              "fieldLabel": "Niche",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  { "option": "Fitness & Wellness" },
+                  { "option": "Fashion & Lifestyle" },
+                  { "option": "Travel & Adventure" },
+                  { "option": "Tech & Productivity" },
+                  { "option": "Food & Cooking" },
+                  { "option": "Beauty & Skincare" },
+                  { "option": "Finance & Business" },
+                  { "option": "Motivation & Mindset" }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Gender",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  { "option": "Female" },
+                  { "option": "Male" },
+                  { "option": "Non-Binary" }
+                ]
+              },
+              "requiredField": true
+            },
+            { "fieldLabel": "Age", "fieldType": "string", "placeholder": "e.g. 22", "requiredField": true },
+            { "fieldLabel": "Location", "fieldType": "string", "placeholder": "e.g. Delhi, India", "requiredField": true },
+            {
+              "fieldLabel": "Personality Vibe",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  { "option": "Motivational & Empowering" },
+                  { "option": "Casual & Relatable" },
+                  { "option": "Luxury & Aspirational" },
+                  { "option": "Witty & Humorous" },
+                  { "option": "Calm & Mindful" },
+                  { "option": "Bold & Edgy" }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Visual Aesthetic",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  { "option": "Warm & Golden tones" },
+                  { "option": "Clean & Minimal" },
+                  { "option": "Dark & Moody" },
+                  { "option": "Vibrant & Colorful" },
+                  { "option": "Pastel & Soft" },
+                  { "option": "Urban & Street" }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Specific Physical Description",
+              "fieldType": "textarea",
+              "placeholder": "e.g. Long dark brown hair, warm brown skin, athletic build, almond-shaped eyes"
+            },
+            { "fieldLabel": "Your Email", "fieldType": "string", "placeholder": "you@email.com", "requiredField": true }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d2cdad8e-cebe-4ae3-823e-1537035b0259",
+      "name": "📋 Influencer Brief1",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [-3664, 1040],
+      "webhookId": "1d1c2502-a630-43b3-9871-1e0212595d32"
+    },
+    {
+      "parameters": {
+        "jsCode": "const f = $input.first().json;\nconst name = (f['Influencer Name'] || '').trim();\nconst handle = (f['Instagram Handle'] || '').trim();\nconst niche = (f['Niche'] || '').trim();\nconst gender = (f['Gender'] || '').trim();\nconst age = (f['Age'] || '').trim();\nconst location = (f['Location'] || '').trim();\nconst personality = (f['Personality Vibe'] || '').trim();\nconst aesthetic = (f['Visual Aesthetic'] || '').trim();\nconst physical = (f['Specific Physical Description'] || '').trim();\nconst email = (f['Your Email'] || '').trim();\nconst physicalDesc = physical || 'A ' + age + '-year-old ' + gender.toLowerCase() + ' from ' + location + ' with an attractive, photogenic appearance suitable for a ' + niche.toLowerCase() + ' influencer.';\n\nreturn [{ json: { name, handle, niche, gender, age, location, personality, aesthetic, physicalDesc, email, timestamp: new Date().toISOString() } }];"
+      },
+      "id": "2da3fd81-d499-4ed3-9c30-a93e1e70d62f",
+      "name": "🔧 Parse Brief1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-3456, 1040]
+    },
+    {
+      "parameters": {
+        "url": "https://trends.google.com/trends/trendingsearches/daily/rss?geo=IN",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "b1c2d3e4-f5a6-7890-abcd-ef1234567890",
+      "name": "🌐 Fetch Google Trends IN",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-3232, 1040]
+    },
+    {
+      "parameters": {
+        "jsCode": "const brief = $('🔧 Parse Brief1').first().json;\nconst trendsRaw = $input.first().json.data || '';\n\nconst trendTitles = [];\nconst regex = /<title><!\\[CDATA\\[([^\\]]+)\\]\\]><\\/title>/g;\nlet match;\nwhile ((match = regex.exec(trendsRaw)) !== null) {\n  const t = match[1].trim();\n  if (t && !t.includes('Google Trends') && !t.includes('Daily Search') && t.length > 2) {\n    trendTitles.push(t);\n  }\n}\nconst googleTrends = trendTitles.slice(0, 8);\n\nconst subredditMap = {\n  'Fitness & Wellness': 'fitness',\n  'Fashion & Lifestyle': 'femalefashionadvice',\n  'Travel & Adventure': 'travel',\n  'Tech & Productivity': 'productivity',\n  'Food & Cooking': 'food',\n  'Beauty & Skincare': 'SkincareAddiction',\n  'Finance & Business': 'personalfinance',\n  'Motivation & Mindset': 'GetMotivated'\n};\nconst subreddit = subredditMap[brief.niche] || 'popular';\nconst subreddit_url = 'https://www.reddit.com/r/' + subreddit + '/hot.json?limit=10&raw_json=1';\n\nreturn [{ json: { ...brief, googleTrends, subreddit, subreddit_url } }];"
+      },
+      "id": "c2d3e4f5-a6b7-8901-bcde-f12345678901",
+      "name": "🔀 Parse Trends + Map Subreddit",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-3008, 1040]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.subreddit_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (compatible; n8n-influencer-agent/1.0)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d3e4f5a6-b7c8-9012-cdef-123456789012",
+      "name": "📱 Fetch Niche Reddit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-2784, 1040]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $('🔀 Parse Trends + Map Subreddit').first().json;\nconst redditResp = $input.first().json;\n\nconst redditTitles = [];\ntry {\n  const children = redditResp?.data?.children || [];\n  for (const child of children) {\n    const post = child?.data;\n    if (post && !post.over_18 && post.title && post.score > 10) {\n      redditTitles.push(post.title);\n    }\n  }\n} catch(e) {}\nconst redditTrends = redditTitles.slice(0, 6);\n\nconst gtText = prev.googleTrends && prev.googleTrends.length > 0\n  ? 'India trending (Google Trends): ' + prev.googleTrends.join(' | ')\n  : '';\nconst rdText = redditTrends.length > 0\n  ? 'r/' + prev.subreddit + ' community hot topics: ' + redditTrends.join(' | ')\n  : '';\nconst trendContext = [gtText, rdText].filter(Boolean).join('\\n') || 'No live trend data available — use evergreen content.';\n\nreturn [{ json: { ...prev, redditTrends, trendContext } }];"
+      },
+      "id": "e4f5a6b7-c8d9-0123-defa-234567890123",
+      "name": "🔀 Enrich Brief with Trends",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-2560, 1040]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4o-mini",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are an expert AI influencer strategist. Create detailed virtual influencer identities. Return ONLY valid JSON. No markdown, no backticks."
+            },
+            {
+              "content": "={{ 'Create a character sheet for this AI influencer:\\n\\nName: ' + $json.name + '\\nHandle: ' + $json.handle + '\\nNiche: ' + $json.niche + '\\nGender: ' + $json.gender + '\\nAge: ' + $json.age + '\\nLocation: ' + $json.location + '\\nPersonality: ' + $json.personality + '\\nVisual Aesthetic: ' + $json.aesthetic + '\\nPhysical: ' + $json.physicalDesc + '\\n\\nReturn this EXACT JSON:\\n{\\n  \"bio\": \"Instagram bio under 150 chars with 1-2 emojis\",\\n  \"backstory\": \"3-4 sentence origin story\",\\n  \"personality_traits\": [\"trait1\", \"trait2\", \"trait3\", \"trait4\", \"trait5\"],\\n  \"content_pillars\": [\"pillar1\", \"pillar2\", \"pillar3\", \"pillar4\"],\\n  \"caption_style\": \"2 sentences on how they write captions\",\\n  \"signature_elements\": \"3 visual signatures for recognition\",\\n  \"target_audience\": \"Who follows them and why\",\\n  \"master_prompt\": \"Detailed Ideogram prompt describing EXACT physical appearance for consistent AI image generation. Include face shape, skin tone, hair, eyes, body type, default outfit, expression. End with: photorealistic, shot on Canon EOS R5, 85mm lens, shallow depth of field, Instagram lifestyle photography.\",\\n  \"hashtag_bank\": [\"20 relevant hashtags\"]\\n}' }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 2000,
+          "temperature": 0.8
+        },
+        "requestOptions": {}
+      },
+      "id": "7379e7df-e20f-492b-9f77-7d1f24740f23",
+      "name": "🤖 AI: Character Sheet",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [-2336, 1040],
+      "credentials": {
+        "openAiApi": {
+          "id": "8BNdAlBvAAfpYIFi",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiResp = $input.first().json;\nconst form = $('🔀 Enrich Brief with Trends').first().json;\nlet character = {};\ntry {\n  const raw = aiResp?.message?.content || '{}';\n  character = JSON.parse(raw.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim());\n} catch (e) {\n  character = {\n    bio: form.niche + ' creator from ' + form.location,\n    backstory: form.name + ' is a ' + form.age + '-year-old ' + form.niche.toLowerCase() + ' enthusiast from ' + form.location + '.',\n    personality_traits: ['authentic', 'motivating', 'creative', 'relatable', 'energetic'],\n    content_pillars: ['Tips', 'Day in Life', 'Inspiration', 'Behind the Scenes'],\n    caption_style: 'Casual, warm, 1-2 emojis, ends with a question.',\n    signature_elements: 'Consistent hairstyle, signature color, always smiling',\n    target_audience: '18-30 year olds interested in ' + form.niche.toLowerCase(),\n    master_prompt: 'A photorealistic portrait of ' + form.physicalDesc + '. ' + form.aesthetic + '. Shot on Canon EOS R5, 85mm lens, shallow depth of field, Instagram lifestyle photography.',\n    hashtag_bank: ['#ai', '#influencer', '#content', '#lifestyle', '#trending']\n  };\n}\nreturn [{ json: { ...form, character } }];"
+      },
+      "id": "677a258a-8888-4dbd-923b-a510efff97ae",
+      "name": "🔀 Parse Character",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-2112, 1040]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4o-mini",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are an Instagram content strategist. Create detailed content calendars with ready-to-use Ideogram AI image prompts. Return ONLY valid JSON array. No markdown, no backticks, no wrapper object — just a raw JSON array."
+            },
+            {
+              "content": "={{ 'Create days 1-15 of a 30-day Instagram calendar for ' + $json.name + ' (' + $json.handle + '), a ' + $json.niche + ' influencer.\\n\\nMaster appearance: ' + $json.character.master_prompt + '\\nCaption style: ' + $json.character.caption_style + '\\nPillars: ' + $json.character.content_pillars.join(', ') + '\\n\\n🔥 TRENDING NOW — Weave 3-5 of these into your post topics for real-world relevance:\\n' + ($json.trendContext || 'No trend data — use evergreen content.') + '\\n\\nReturn a JSON ARRAY (not object) of 15 items. Each item:\\n{\\n  \"day\": 1,\\n  \"type\": \"Feed Post or Carousel or Reel or Story\",\\n  \"photo_description\": \"What the image shows\",\\n  \"ideogram_prompt\": \"FULL Ideogram prompt starting with her exact appearance description then adding this specific scene, outfit, location, lighting. Must be detailed enough to copy-paste directly into Ideogram.\",\\n  \"caption\": \"2-3 line Instagram caption ending with engagement question\",\\n  \"hashtags\": \"15 hashtags as string\",\\n  \"posting_time\": \"Time in IST\"\\n}\\n\\nMix: 6 feed posts, 3 carousels, 4 reels, 2 story days. Make it feel like a REAL person.' }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 4096,
+          "temperature": 0.85
+        },
+        "requestOptions": {}
+      },
+      "id": "4657b793-c3fa-4360-8aa4-b3e73601b19b",
+      "name": "🤖 AI: Calendar Days 1-15",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [-1888, 1040],
+      "credentials": {
+        "openAiApi": {
+          "id": "8BNdAlBvAAfpYIFi",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiResp = $input.first().json;\nconst prev = $('🔀 Parse Character').first().json;\nlet days1to15 = [];\ntry {\n  const raw = aiResp?.message?.content || '[]';\n  const cleaned = raw.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  const parsed = JSON.parse(cleaned);\n  days1to15 = Array.isArray(parsed) ? parsed : (parsed.calendar || parsed.days || []);\n} catch (e) {\n  days1to15 = [];\n}\nreturn [{ json: { ...prev, days1to15 } }];"
+      },
+      "id": "862fbb39-bc7a-4823-901e-73372e7757ff",
+      "name": "🔀 Parse Days 1-15",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1664, 1040]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4o-mini",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are an Instagram content strategist. Create detailed content calendars with ready-to-use Ideogram AI image prompts. Return ONLY valid JSON array. No markdown, no backticks, no wrapper object — just a raw JSON array."
+            },
+            {
+              "content": "={{ 'Create days 16-30 of a 30-day Instagram calendar for ' + $json.name + ' (' + $json.handle + '), a ' + $json.niche + ' influencer.\\n\\nMaster appearance: ' + $json.character.master_prompt + '\\nCaption style: ' + $json.character.caption_style + '\\nPillars: ' + $json.character.content_pillars.join(', ') + '\\n\\n🔥 TRENDING NOW — Weave 3-5 of these into your post topics (use different trends than days 1-15):\\n' + ($json.trendContext || 'No trend data — use evergreen content.') + '\\n\\nReturn a JSON ARRAY of 15 items (days 16-30). Each item:\\n{\\n  \"day\": 16,\\n  \"type\": \"Feed Post or Carousel or Reel or Story\",\\n  \"photo_description\": \"What the image shows\",\\n  \"ideogram_prompt\": \"FULL Ideogram prompt starting with her exact appearance description then adding this specific scene, outfit, location, lighting.\",\\n  \"caption\": \"2-3 line Instagram caption ending with engagement question\",\\n  \"hashtags\": \"15 hashtags as string\",\\n  \"posting_time\": \"Time in IST\"\\n}\\n\\nMix: 6 feed posts, 3 carousels, 4 reels, 2 story days. Vary content from days 1-15.' }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 4096,
+          "temperature": 0.85
+        },
+        "requestOptions": {}
+      },
+      "id": "9f37b98b-47cd-4c19-a8d6-01b031cf790f",
+      "name": "🤖 AI: Calendar Days 16-30",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [-1456, 1040],
+      "credentials": {
+        "openAiApi": {
+          "id": "8BNdAlBvAAfpYIFi",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiResp = $input.first().json;\nconst prev = $('🔀 Parse Days 1-15').first().json;\nlet days16to30 = [];\ntry {\n  const raw = aiResp?.message?.content || '[]';\n  const cleaned = raw.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  const parsed = JSON.parse(cleaned);\n  days16to30 = Array.isArray(parsed) ? parsed : (parsed.calendar || parsed.days || []);\n} catch (e) {\n  days16to30 = [];\n}\nconst fullCalendar = [...(prev.days1to15 || []), ...days16to30];\nreturn [{ json: { ...prev, days1to15: undefined, calendar: fullCalendar } }];"
+      },
+      "id": "06837102-b6f3-4bcb-b94f-016d8e4e0764",
+      "name": "🔀 Merge Full Calendar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1232, 1040]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4o-mini",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are an Instagram content creator and brand outreach specialist. Return ONLY valid JSON. No markdown, no backticks."
+            },
+            {
+              "content": "={{ 'Create carousel scripts and brand pitch emails for:\\n\\nInfluencer: ' + $json.name + ' (' + $json.handle + ')\\nNiche: ' + $json.niche + '\\nPersonality: ' + $json.personality + '\\nBio: ' + $json.character.bio + '\\nTarget Audience: ' + $json.character.target_audience + '\\nLocation: ' + $json.location + '\\n\\nReturn this JSON:\\n{\\n  \"carousels\": [4 carousels, each with \"title\" and \"slides\" array of 7 items with \"slide_num\", \"headline\" (under 8 words), \"body\" (1-2 sentences)],\\n  \"brand_pitches\": [5 pitches, each with \"brand_type\", \"subject\", \"body\" (under 150 words, include engagement rate 5-8%, collaboration proposal, rate range in INR)]\\n}' }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 4096,
+          "temperature": 0.8
+        },
+        "requestOptions": {}
+      },
+      "id": "f0e6a7e5-efd4-4591-b1df-0386edad9658",
+      "name": "🤖 AI: Carousels + Pitches",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [-1008, 1040],
+      "credentials": {
+        "openAiApi": {
+          "id": "8BNdAlBvAAfpYIFi",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiResp = $input.first().json;\nconst prev = $('🔀 Merge Full Calendar').first().json;\nlet extras = {};\ntry {\n  const raw = aiResp?.message?.content || '{}';\n  extras = JSON.parse(raw.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim());\n} catch (e) {\n  extras = { carousels: [], brand_pitches: [] };\n}\nreturn [{ json: { ...prev, carousels: extras.carousels || [], brandPitches: extras.brand_pitches || [] } }];"
+      },
+      "id": "36aad467-ad2f-4ed3-9541-0bc903fc3880",
+      "name": "🔀 Parse Extras1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-784, 1040]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst cal = d.calendar || [];\n\nif (cal.length === 0) {\n  return [{ json: { ...d, calendarRows: [] } }];\n}\n\nconst rows = cal.map(day => ({\n  day: day.day || '',\n  type: day.type || '',\n  photo_description: day.photo_description || '',\n  ideogram_prompt: day.ideogram_prompt || '',\n  caption: day.caption || '',\n  hashtags: day.hashtags || '',\n  posting_time: day.posting_time || '',\n  status: 'Not Generated'\n}));\n\nreturn [{ json: { ...d, calendarRows: rows } }];"
+      },
+      "id": "f94bab9d-7f9b-4925-8ee7-862a02d6a978",
+      "name": "📊 Prepare Calendar Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-560, 1040]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1nWPhDgqvHYYCnhHgnunsyHXP4rHwW7eJ_rMQWjiMn0o",
+          "mode": "list",
+          "cachedResultName": "AI Influencer Factory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nWPhDgqvHYYCnhHgnunsyHXP4rHwW7eJ_rMQWjiMn0o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Master",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nWPhDgqvHYYCnhHgnunsyHXP4rHwW7eJ_rMQWjiMn0o/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "1e53a094-010f-47d0-99e6-eb8cb578cd9d",
+      "name": "📝 Log to Master Tab",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [-336, 832],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "DXFuvXECI1McFlIe",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst rows = d.calendarRows || [];\nconst name = d.name;\nconst handle = d.handle;\n\nif (rows.length === 0) return [];\n\nreturn rows.map(row => ({ json: {\n  Influencer: name + ' (' + handle + ')',\n  'Day': row.day,\n  'Type': row.type,\n  'Photo Description': row.photo_description,\n  'Ideogram Prompt': row.ideogram_prompt,\n  'Caption': row.caption,\n  'Hashtags': row.hashtags,\n  'Posting Time': row.posting_time,\n  'Image Status': 'Not Generated',\n  'Video Status': 'Not Generated',\n  'Approval': 'Pending',\n  'Posted': 'No'\n} }));"
+      },
+      "id": "f7811abf-8230-4d17-b631-6ba786da2e74",
+      "name": "📊 Expand Calendar to Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-336, 1040]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1nWPhDgqvHYYCnhHgnunsyHXP4rHwW7eJ_rMQWjiMn0o",
+          "mode": "list",
+          "cachedResultName": "AI Influencer Factory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nWPhDgqvHYYCnhHgnunsyHXP4rHwW7eJ_rMQWjiMn0o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 778604230,
+          "mode": "list",
+          "cachedResultName": "Calendar",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nWPhDgqvHYYCnhHgnunsyHXP4rHwW7eJ_rMQWjiMn0o/edit#gid=778604230"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "5cc081e3-283e-47e0-acb3-6b49363a2357",
+      "name": "📝 Log Calendar (1 Row Per Day)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [-112, 1040],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "DXFuvXECI1McFlIe",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('📊 Prepare Calendar Rows').first().json;\nconst c = d.character;\nconst cal = d.calendar || [];\nconst carousels = d.carousels || [];\nconst pitches = d.brandPitches || [];\n\nlet calText = '';\ncal.forEach(day => {\n  calText += '\\n--- DAY ' + day.day + ' (' + day.type + ') ---\\nPhoto: ' + day.photo_description + '\\n\\nIDEOGRAM PROMPT (copy-paste this):\\n' + day.ideogram_prompt + '\\n\\nCAPTION:\\n' + day.caption + '\\n\\nHASHTAGS: ' + day.hashtags + '\\nBEST TIME: ' + day.posting_time + '\\n';\n});\n\nlet carText = '';\ncarousels.forEach((car, i) => {\n  carText += '\\n=== CAROUSEL ' + (i+1) + ': ' + car.title + ' ===\\n';\n  (car.slides || []).forEach(s => { carText += 'Slide ' + s.slide_num + ': ' + s.headline + '\\n  ' + s.body + '\\n'; });\n});\n\nlet pitchText = '';\npitches.forEach((p, i) => {\n  pitchText += '\\n=== PITCH ' + (i+1) + ': ' + p.brand_type + ' ===\\nSubject: ' + p.subject + '\\n\\n' + p.body + '\\n';\n});\n\nconst trendSummary = d.trendContext ? '\\n\\nTRENDS USED FOR GROUNDING:\\n' + d.trendContext : '';\n\nconst megaEmail = '🤖 YOUR AI INFLUENCER IS READY: ' + d.name + ' (' + d.handle + ')\\n\\n' + '='.repeat(50) + '\\nCHARACTER SHEET\\n' + '='.repeat(50) + '\\nBio: ' + c.bio + '\\nBackstory: ' + c.backstory + '\\nPersonality: ' + (c.personality_traits||[]).join(', ') + '\\nContent Pillars: ' + (c.content_pillars||[]).join(', ') + '\\nCaption Style: ' + c.caption_style + '\\nSignature Elements: ' + c.signature_elements + '\\nTarget Audience: ' + c.target_audience + '\\n\\nMASTER IDEOGRAM PROMPT:\\n' + c.master_prompt + '\\n\\nHASHTAG BANK:\\n' + (c.hashtag_bank||[]).join(' ') + trendSummary + '\\n\\n' + '='.repeat(50) + '\\n30-DAY CALENDAR (' + cal.length + ' days generated)\\n' + '='.repeat(50) + '\\n' + calText + '\\n\\n' + '='.repeat(50) + '\\nCAROUSEL SCRIPTS\\n' + '='.repeat(50) + '\\n' + carText + '\\n\\n' + '='.repeat(50) + '\\nBRAND PITCH EMAILS\\n' + '='.repeat(50) + '\\n' + pitchText + '\\n\\n' + '='.repeat(50) + '\\nNEXT STEPS\\n' + '='.repeat(50) + '\\n1. Open your Google Sheet — Calendar tab has 1 row per day\\n2. For Day 1: copy the Ideogram Prompt from the sheet\\n3. Open ideogram.ai → paste prompt → generate → download image\\n4. Update the Approval column to APPROVED when satisfied\\n5. Upload image to kling.ai → generate 5-sec video clip\\n6. Open Canva for carousels, CapCut for reels\\n7. Post to Instagram with the caption and hashtags from the sheet\\n8. Update Image Status, Video Status, and Posted columns\\n\\nTotal cost: INR 0. Your AI influencer is ready to go live.';\n\nreturn [{ json: { ...d, megaEmail } }];"
+      },
+      "id": "95395ae9-c9f4-4ff3-add9-5b909e38d0a8",
+      "name": "📝 Compile Mega Email1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-336, 1232]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "={{ '🤖 AI Influencer Ready: ' + $json.name + ' — Character + 30-Day Trend-Grounded Calendar + Prompts + Pitches' }}",
+        "message": "={{ $json.megaEmail }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "c3ff9b57-f4a5-40ce-9bde-0dd9aa6ba9e9",
+      "name": "📧 Send Complete Package1",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [-112, 1232],
+      "webhookId": "3e030adc-c690-4864-9788-8270d8e20875",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "lr7mEtd9F7XIfoGz",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "📋 Influencer Brief1": [
+      {
+        "json": {
+          "Influencer Name": "Ananya Sharma",
+          "Instagram Handle": "@ananya.fits",
+          "Niche": "Fitness & Wellness",
+          "Gender": "Female",
+          "Age": "24",
+          "Location": "Delhi",
+          "Personality Vibe": "Motivational & Empowering",
+          "Visual Aesthetic": "Warm & Golden tones",
+          "Specific Physical Description": "Long dark brown hair, warm brown skin, athletic build, almond-shaped eyes",
+          "Your Email": "admin@reoclaw.com",
+          "submittedAt": "2026-04-25T10:14:38.089-04:00",
+          "formMode": "test"
+        },
+        "pairedItem": { "item": 0 }
+      }
+    ]
+  },
+  "connections": {
+    "📋 Influencer Brief1": {
+      "main": [[{ "node": "🔧 Parse Brief1", "type": "main", "index": 0 }]]
+    },
+    "🔧 Parse Brief1": {
+      "main": [[{ "node": "🌐 Fetch Google Trends IN", "type": "main", "index": 0 }]]
+    },
+    "🌐 Fetch Google Trends IN": {
+      "main": [[{ "node": "🔀 Parse Trends + Map Subreddit", "type": "main", "index": 0 }]]
+    },
+    "🔀 Parse Trends + Map Subreddit": {
+      "main": [[{ "node": "📱 Fetch Niche Reddit", "type": "main", "index": 0 }]]
+    },
+    "📱 Fetch Niche Reddit": {
+      "main": [[{ "node": "🔀 Enrich Brief with Trends", "type": "main", "index": 0 }]]
+    },
+    "🔀 Enrich Brief with Trends": {
+      "main": [[{ "node": "🤖 AI: Character Sheet", "type": "main", "index": 0 }]]
+    },
+    "🤖 AI: Character Sheet": {
+      "main": [[{ "node": "🔀 Parse Character", "type": "main", "index": 0 }]]
+    },
+    "🔀 Parse Character": {
+      "main": [[{ "node": "🤖 AI: Calendar Days 1-15", "type": "main", "index": 0 }]]
+    },
+    "🤖 AI: Calendar Days 1-15": {
+      "main": [[{ "node": "🔀 Parse Days 1-15", "type": "main", "index": 0 }]]
+    },
+    "🔀 Parse Days 1-15": {
+      "main": [[{ "node": "🤖 AI: Calendar Days 16-30", "type": "main", "index": 0 }]]
+    },
+    "🤖 AI: Calendar Days 16-30": {
+      "main": [[{ "node": "🔀 Merge Full Calendar", "type": "main", "index": 0 }]]
+    },
+    "🔀 Merge Full Calendar": {
+      "main": [[{ "node": "🤖 AI: Carousels + Pitches", "type": "main", "index": 0 }]]
+    },
+    "🤖 AI: Carousels + Pitches": {
+      "main": [[{ "node": "🔀 Parse Extras1", "type": "main", "index": 0 }]]
+    },
+    "🔀 Parse Extras1": {
+      "main": [[{ "node": "📊 Prepare Calendar Rows", "type": "main", "index": 0 }]]
+    },
+    "📊 Prepare Calendar Rows": {
+      "main": [[
+        { "node": "📝 Log to Master Tab", "type": "main", "index": 0 },
+        { "node": "📊 Expand Calendar to Rows", "type": "main", "index": 0 },
+        { "node": "📝 Compile Mega Email1", "type": "main", "index": 0 }
+      ]]
+    },
+    "📊 Expand Calendar to Rows": {
+      "main": [[{ "node": "📝 Log Calendar (1 Row Per Day)", "type": "main", "index": 0 }]]
+    },
+    "📝 Compile Mega Email1": {
+      "main": [[{ "node": "📧 Send Complete Package1", "type": "main", "index": 0 }]]
+    },
+    "📧 Send Complete Package1": {
+      "main": [[]]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "v2-5-trend-grounded-001",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "db4e3ebe7200858fee452751665ae7824a24006e6fdbd82d41838583538806e2"
+  },
+  "id": "CDeY17GNy411AGMG",
+  "tags": []
+}
